@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model tenant {
+  id         String   @id @default(uuid())
+  name       String
+  created_at DateTime @default(now())
+  subjects   subject[]
+  end_users  end_user[]
+  reviews    review[]
+}
+
+model subject {
+  id           String   @id @default(uuid())
+  tenant_id    String
+  subject_type String
+  external_ref String
+  title        String?
+  metadata     Json?
+  created_at   DateTime @default(now())
+
+  tenant tenant @relation(fields: [tenant_id], references: [id])
+  reviews review[]
+  rating_aggregate subject_rating_aggregate?
+
+  @@unique([tenant_id, subject_type, external_ref])
+}
+
+model end_user {
+  id                 String   @id @default(uuid())
+  tenant_id          String
+  external_user_id   String
+  display_name       String?
+  created_at         DateTime @default(now())
+
+  tenant tenant @relation(fields: [tenant_id], references: [id])
+  reviews review[]  @relation("userReviews")
+
+  @@unique([tenant_id, external_user_id])
+}
+
+model review {
+  id                 String   @id @default(uuid())
+  tenant_id          String
+  subject_id         String
+  user_id            String
+  rating             Int
+  title              String?
+  body               String?
+  language           String?
+  status             String   @default("published")
+  is_verified_purchase Boolean @default(false)
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  tenant  tenant  @relation(fields: [tenant_id], references: [id])
+  subject subject @relation(fields: [subject_id], references: [id])
+  user    end_user @relation("userReviews", fields: [user_id], references: [id])
+  aspects review_aspect[]
+  votes   review_vote[]
+  flags   review_flag[]
+
+  @@unique([tenant_id, subject_id, user_id])
+  @@index([tenant_id, subject_id, status, created_at])
+}
+
+model review_aspect {
+  id         String @id @default(uuid())
+  review_id  String
+  aspect_key String
+  rating     Int
+
+  review review @relation(fields: [review_id], references: [id])
+
+  @@unique([review_id, aspect_key])
+}
+
+model review_vote {
+  id                      String   @id @default(uuid())
+  tenant_id               String
+  review_id               String
+  voter_external_user_id  String
+  is_helpful              Boolean
+  created_at              DateTime @default(now())
+
+  review review @relation(fields: [review_id], references: [id])
+
+  @@unique([review_id, voter_external_user_id])
+  @@index([review_id])
+}
+
+model review_flag {
+  id                         String   @id @default(uuid())
+  tenant_id                  String
+  review_id                  String
+  flag_type                  String
+  notes                      String?
+  created_by_external_user_id String?
+  created_at                 DateTime @default(now())
+
+  review review @relation(fields: [review_id], references: [id])
+
+  @@index([review_id])
+}
+
+model subject_rating_aggregate {
+  subject_id         String @id
+  tenant_id          String
+  count_total        Int    @default(0)
+  avg_rating         Float  @default(0)
+  bayesian_avg       Float  @default(0)
+  dist_1             Int    @default(0)
+  dist_2             Int    @default(0)
+  dist_3             Int    @default(0)
+  dist_4             Int    @default(0)
+  dist_5             Int    @default(0)
+  aspects            Json?
+  last_recomputed_at DateTime?
+
+  subject subject @relation(fields: [subject_id], references: [id])
+}
+
+model outbox_event {
+  id         String   @id @default(uuid())
+  tenant_id  String
+  subject_id String
+  event_type String
+  payload    Json?
+  processed  Boolean  @default(false)
+  created_at DateTime @default(now())
+}

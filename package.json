@@ -1,0 +1,42 @@
+{
+  "name": "reviews-service",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watchAll",
+    "lint": "eslint . --ext .ts",
+    "migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "seed": "ts-node --project tsconfig.json prisma/seed.ts"
+  },
+  "dependencies": {
+  "express": "latest",
+  "zod": "latest",
+  "jsonwebtoken": "latest",
+  "pino": "latest",
+  "@prisma/client": "latest",
+  "swagger-jsdoc": "latest",
+  "swagger-ui-express": "latest",
+  "cors": "latest",
+  "helmet": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "ts-node": "latest",
+    "ts-node-dev": "latest",
+    "prisma": "latest",
+    "jest": "latest",
+    "ts-jest": "latest",
+    "supertest": "latest",
+    "@types/express": "latest",
+    "@types/jest": "latest",
+    "@types/supertest": "latest",
+    "@types/jsonwebtoken": "latest",
+    "eslint": "latest",
+    "prettier": "latest"
+  }
+}
